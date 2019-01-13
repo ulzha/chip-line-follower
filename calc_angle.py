@@ -57,19 +57,24 @@ def find_line(f, img):
     # infer the equations for left and right edge of the line
     l = left_edge(img)
     r = right_edge(img)
-    print f, l, r
-
     # assume their bisector to be our desired trajectory
+    b = l and r and (
+            ((l[0][0] + r[0][0]) / 2, (l[0][1] + r[0][1]) / 2),
+            ((l[1][0] + r[1][0]) / 2, (l[1][1] + r[1][1]) / 2)
+        )
 
-    img_large = enlarged(cv2.cvtColor(img, cv2.COLOR_GRAY2RGB))
-    img_overlay = img_large.copy()
-    if l:
-        cv2.line(img_overlay, (l[0][1] * 10 + 5, l[0][0] * 10 + 5), (l[1][1] * 10 + 5, l[1][0] * 10 + 5), (0, 0, 255))
-    if r:
-        cv2.line(img_overlay, (r[0][1] * 10 + 5, r[0][0] * 10 + 5), (r[1][1] * 10 + 5, r[1][0] * 10 + 5), (0, 0, 255))
-    cv2.imshow(f, cv2.addWeighted(img_large, 0.25, img_overlay, 0.75, 0))
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    # img_large = enlarged(cv2.cvtColor(img, cv2.COLOR_GRAY2RGB))
+    # img_overlay = img_large.copy()
+    # if l:
+    #     cv2.line(img_overlay, (l[0][1] * 10 + 5, l[0][0] * 10 + 5), (l[1][1] * 10 + 5, l[1][0] * 10 + 5), (0, 0, 255))
+    # if r:
+    #     cv2.line(img_overlay, (r[0][1] * 10 + 5, r[0][0] * 10 + 5), (r[1][1] * 10 + 5, r[1][0] * 10 + 5), (0, 0, 255))
+    # if b:
+    #     cv2.line(img_overlay, (b[0][1] * 10 + 5, b[0][0] * 10 + 5), (b[1][1] * 10 + 5, b[1][0] * 10 + 5), (0, 255, 0))
+    # cv2.imshow(f, cv2.addWeighted(img_large, 0.25, img_overlay, 0.75, 0))
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
+    return b
 
 
 def enlarged(img):
@@ -94,4 +99,4 @@ def show_overlaid(name, img, overlay):
 for f in sorted(glob.glob('????-*.jpg')):
     img = cv2.imread(f, cv2.IMREAD_GRAYSCALE)
     if 'edges' in f:
-        find_line(f, img)
+        b = find_line(f, img)
