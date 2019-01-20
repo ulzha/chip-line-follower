@@ -2,9 +2,14 @@ from CHIP_IO import GPIO
 from time import sleep
 import cv2
 from datetime import datetime, timedelta
+import logging
 import math
 import glob
 import os
+import sys
+
+logging.basicConfig(filename='all.log', level=logging.DEBUG)
+log = logging.getLogger(__name__)
 
 GPIO.setup("LCD-D12", GPIO.IN)
 GPIO.setup("LCD-D14", GPIO.IN)
@@ -19,7 +24,7 @@ GPIO.input("LCD-D14")
 
 
 def drive(speed, direction=0):
-    print "Driving", speed, direction
+    log.debug("Driving %s %s".format(speed, direction))
     if speed > 0:
         GPIO.output("LCD-D20", GPIO.LOW)
         GPIO.output("LCD-D22", GPIO.HIGH if direction > 0 else GPIO.LOW)
@@ -41,7 +46,7 @@ def drive(speed, direction=0):
 
 
 def coast():
-    print "Putting motor controller to sleep"
+    log.debug("Putting motor controller to sleep")
     GPIO.output("LCD-D18", GPIO.LOW)
 
 
@@ -92,7 +97,7 @@ def follow_fast(err):
 
 
 try:
-    print "Removing old images"
+    log.info("Removing old images")
     for f in glob.glob('????-*.jpg'):
         os.remove(f)
 
@@ -115,25 +120,30 @@ try:
             cv2.imwrite(filename_prefix + 'edges.jpg', img_edges)
 
             c_line = find_line(img_edges)
-            print frame_start_time_str, c_line
 
             if c_line is None:
+                data_sample = (frame_start_time_str, c_line, None)
+                log.info(repr(data_sample))
+                print repr(data_sample)
                 n_missed += 1
+                # TODO drive somewhere?
                 if n_missed == 10:
-                    print "Lost the line"
+                    log.info("Lost the line")
                     break
             else:
                 n_missed = 0
                 err = 2. * c_line / img_edges.shape[1] - 1
-                print "Calculated error {:.2f}".format(err)
+                data_sample = (frame_start_time_str, c_line, err)
+                log.info(repr(data_sample))
+                print repr(data_sample)
                 # follow(err)  # loses the line often
                 # follow_slow(err)  # yay, this works, but sometimes oversteers anyway
                 follow_fast(err)
         else:
-            print "Capture error"
-            break
+            log.error("Capture error: %s", s)
+            sys.exit(1)
         if datetime.now() - start_time > timedelta(seconds=20):
-            print "Time is up"
+            log.info("Time is up")
             break
         i_frame += 1
 finally:
