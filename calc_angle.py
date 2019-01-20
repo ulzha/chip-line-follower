@@ -1,5 +1,7 @@
 import cv2
 import glob
+import numpy as np
+from numpy import linalg
 
 def is_edge(img, r, c):
     EDGE_THRESHOLD = 128
@@ -53,7 +55,7 @@ def right_edge(img):
             return (r, c), (r1, c1s[-1])
 
 
-def find_line(f, img):
+def find_line(img):
     # infer the equations for left and right edge of the line
     l = left_edge(img)
     r = right_edge(img)
@@ -77,6 +79,20 @@ def find_line(f, img):
     return b
 
 
+def norm_line(line, img_width, img_height):
+    """ Accepts a line as a pair of pixel coordinates.
+    Returns a pair of vectors - the line's closest point to origin placed in the center of the image, and the line's direction. """
+    a = np.array([line[0][1] + .5 - img_width * .5, -(line[0][0] + .5 - img_height * .5)])
+    b = np.array([line[1][1] - line[0][1], -(line[1][0] - line[0][0])])
+    a1 = np.multiply(b, np.dot(a, b) / np.dot(b, b))
+    return np.subtract(a, a1), np.divide(b, linalg.norm(b))
+
+
+def find_line_norm(img):
+    b = find_line(img)
+    return b and norm_line(b, img.shape[1], img.shape[0])
+
+
 def enlarged(img):
     return cv2.resize(img, (img.shape[1] * 10, img.shape[0] * 10), interpolation=cv2.INTER_NEAREST)
 
@@ -96,7 +112,7 @@ def show_overlaid(name, img, overlay):
     cv2.destroyAllWindows()
 
 
-for f in sorted(glob.glob('????-*.jpg')):
-    img = cv2.imread(f, cv2.IMREAD_GRAYSCALE)
-    if 'edges' in f:
-        b = find_line(f, img)
+# for f in sorted(glob.glob('????-*.jpg')):
+#     img = cv2.imread(f, cv2.IMREAD_GRAYSCALE)
+#     if 'edges' in f:
+#         b = find_line(f, img)

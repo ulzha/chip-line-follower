@@ -1,6 +1,7 @@
 from CHIP_IO import GPIO
 from time import sleep
 import cv2
+from calc_angle import find_line_norm
 from datetime import datetime, timedelta
 import logging
 import math
@@ -50,7 +51,7 @@ def coast():
     GPIO.output("LCD-D18", GPIO.LOW)
 
 
-def find_line(img):
+def find_line_col(img):
     """ Simpleton logic - assume the line crosses the bottom row, so find the white pixels of the bottom row and take their midpoint. """
     r = img.shape[0] - 1
     leftmost = None
@@ -119,10 +120,10 @@ try:
             cv2.imwrite(filename_prefix + 'shrunk.jpg', img_shrunk)
             cv2.imwrite(filename_prefix + 'edges.jpg', img_edges)
 
-            c_line = find_line(img_edges)
+            c_line = find_line_col(img_edges)
 
             if c_line is None:
-                data_sample = (frame_start_time_str, c_line, None)
+                data_sample = (frame_start_time_str, None, None)
                 log.info(repr(data_sample))
                 print repr(data_sample)
                 n_missed += 1
@@ -132,8 +133,9 @@ try:
                     break
             else:
                 n_missed = 0
+                l = find_line_norm(img_edges)
                 err = 2. * c_line / img_edges.shape[1] - 1
-                data_sample = (frame_start_time_str, c_line, err)
+                data_sample = (frame_start_time_str, l, err)
                 log.info(repr(data_sample))
                 print repr(data_sample)
                 # follow(err)  # loses the line often
