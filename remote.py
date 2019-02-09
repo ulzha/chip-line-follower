@@ -37,7 +37,7 @@ def animate_quiver(fig, subplot, iter):
     Y = np.array([])
     U = np.array([])
     V = np.array([])
-    time_indicator = fig.text(0, 0, '', alpha=.7, horizontalalignment='left')
+    time_indicator = fig.text(.01, .01, '', alpha=.7, horizontalalignment='left')
     for frame_time, line in iter:
         time_indicator.set_text(str(frame_time))
         if line:
@@ -98,13 +98,75 @@ def replay_sequence(images_path):
         yield frame_time, line
 
 
+control_buffer = []
+controller_state = {
+    'drive': False
+}
+
+
 def live_sequence(socket):
-    """ TODO """
+    """ TODO forward stuff from control_buffer to robot and receive data samples back """
     pass
+
+
+def throttle_press():
+    controller_state['drive'] = not controller_state['drive']
+    print('Start' if controller_state['drive'] else 'Stop')
+    control_buffer.append(('drive', controller_state['drive']))
+
+
+def connect_event_handlers(fig, throttle_handler):
+    key_indicator = fig.text(.5, .01, '', alpha=.7, horizontalalignment='center')
+    # deduplicate key press events. Crazy that we have to do this
+    # https://stackoverflow.com/questions/27215326/tkinter-keypress-keyrelease-events/27215461
+    # FIXME processing is seriously lagging behind when a key is held
+    event_buffer = []
+
+    def debounced_key_press(event):
+        """ Also called if the set of pressed keys changes """
+        # print('Debounced press', repr(event.key))
+        key_indicator.set_text(event.key)
+        if event.key == ' ':
+            throttle_handler()
+        fig.canvas.draw()
+
+    def key_press(event):
+        # print('Press', repr(event.key))
+        if len(event_buffer) > 0 and event_buffer[-1][0] == 'release' and event_buffer[-1][1].key == event.key:
+            # consider this a repeat and ignore both events
+            event_buffer.clear()
+        else:
+            # pass through
+            event_buffer.clear()
+            debounced_key_press(event)
+
+    def debounced_key_release(event):
+        """ Called 0.1 s after a key is released """
+        # print('Debounced release', repr(event.key))
+        key_indicator.set_text('')
+        fig.canvas.draw()
+
+    def key_release(event):
+        # print('Release', repr(event.key))
+        event_buffer.append(('release', event))
+
+        def maybe_release(event):
+            # print('Maybe release', repr(event.key), repr(event_buffer))
+            if len(event_buffer) > 0 and event_buffer[-1] == ('release', event):
+                event_buffer.clear()
+                debounced_key_release(event)
+
+        timer = fig.canvas.new_timer(interval=100, callbacks=[(maybe_release, [event], {})])
+        timer.single_shot = True
+        timer.start()
+
+    fig.canvas.mpl_connect('key_press_event', key_press)
+    fig.canvas.mpl_connect('key_release_event', key_release)
 
 
 fig.canvas.draw()
 fig.canvas.flush_events()
+connect_event_handlers(fig, throttle_press)
 sleep(1)
 vf2.add_patch(plt.Polygon([(35, 15), (-35, 15), (-35, -15), (35, -15)], alpha=.1))
 animate_quiver(fig, vf2, replay_sequence(sys.argv[1]))
