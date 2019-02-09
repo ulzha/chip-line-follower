@@ -32,21 +32,21 @@ def sleep_until(target_time):
         sleep(timeout_seconds)
 
 
-def animate_quiver(fig, subplot, sequence):
+def animate_quiver(fig, subplot, iter):
     X = np.array([])
     Y = np.array([])
     U = np.array([])
     V = np.array([])
-    start_time = datetime.now()
-    for frame_capture_time, line in sequence:
-        frame_draw_time = start_time + (frame_capture_time - sequence[0][0])
-        sleep_until(frame_draw_time)
-        X = np.append(X, line[0][0])
-        Y = np.append(Y, line[0][1])
-        U = np.append(U, line[1][0])
-        V = np.append(V, line[1][1])
-        # q = subplot.quiver(X, Y, U, V, scale=1)
-        q = subplot.quiver(X, Y, U, V)
+    time_indicator = fig.text(0, 0, '', alpha=.7, horizontalalignment='left')
+    for frame_time, line in iter:
+        time_indicator.set_text(str(frame_time))
+        if line:
+            X = np.append(X, line[0][0])
+            Y = np.append(Y, line[0][1])
+            U = np.append(U, line[1][0])
+            V = np.append(V, line[1][1])
+            # q = subplot.quiver(X, Y, U, V, scale=1)
+            q = subplot.quiver(X, Y, U, V)
         fig.canvas.draw()
         fig.canvas.flush_events()
 
@@ -79,12 +79,34 @@ def parse_line(f):
     return find_line_norm(img)
 
 
-sequence = [(parse_time(f), parse_line(f)) for f in sorted(glob.glob(os.path.join(sys.argv[1], '????-*.jpg'))) if 'edges' in f]
-valid_sequence = [i for i in sequence if i[0] is not None and i[1] is not None]
+class DataSample(object):
+    """ TODO """
+    def __str__(self):
+        pass
+
+
+def replay_sequence(images_path):
+    """ Iterates with pauses between frames as they originally occurred. """
+    sequence = [(parse_time(f), parse_line(f)) for f in sorted(glob.glob(os.path.join(images_path, '????-*.jpg'))) if 'edges' in f]
+    start_time = datetime.now()
+    for frame_time, line in sequence:
+        frame_time_str = frame_time.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+        data_sample = (frame_time_str, line)
+        frame_draw_time = start_time + (frame_time - sequence[0][0])
+        sleep_until(frame_draw_time)
+        print(repr(data_sample))
+        yield frame_time, line
+
+
+def live_sequence(socket):
+    """ TODO """
+    pass
+
 
 fig.canvas.draw()
 fig.canvas.flush_events()
 sleep(1)
 vf2.add_patch(plt.Polygon([(35, 15), (-35, 15), (-35, -15), (35, -15)], alpha=.1))
-animate_quiver(fig, vf2, valid_sequence)
+animate_quiver(fig, vf2, replay_sequence(sys.argv[1]))
+vf2.text(0, -10, 'press any key', alpha=.7, horizontalalignment='center')
 fig.waitforbuttonpress()

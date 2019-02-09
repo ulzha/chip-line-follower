@@ -125,7 +125,7 @@ try:
             c_line = find_line_col(img_edges)
 
             if c_line is None:
-                data_sample = (frame_start_time_str, None, None)
+                data_sample = (frame_start_time_str, None)
                 log.info(repr(data_sample))
                 print(repr(data_sample))
                 n_missed += 1
@@ -137,7 +137,7 @@ try:
                 n_missed = 0
                 l = find_line_norm(img_edges)
                 err = 2. * c_line / img_edges.shape[1] - 1
-                data_sample = (frame_start_time_str, l, err)
+                data_sample = (frame_start_time_str, l)
                 log.info(repr(data_sample))
                 print(repr(data_sample))
                 # follow(err)  # loses the line often
