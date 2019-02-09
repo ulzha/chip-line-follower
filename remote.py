@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """ Remotely control the robot's onboard software over SSH and plot a live technical visualization of its state. """
 
 # TODO livestream imagery too?

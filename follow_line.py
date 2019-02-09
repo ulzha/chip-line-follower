@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from CHIP_IO import GPIO
 from time import sleep
 import cv2
@@ -125,7 +127,7 @@ try:
             if c_line is None:
                 data_sample = (frame_start_time_str, None, None)
                 log.info(repr(data_sample))
-                print repr(data_sample)
+                print(repr(data_sample))
                 n_missed += 1
                 # TODO drive somewhere?
                 if n_missed == 10:
@@ -137,7 +139,7 @@ try:
                 err = 2. * c_line / img_edges.shape[1] - 1
                 data_sample = (frame_start_time_str, l, err)
                 log.info(repr(data_sample))
-                print repr(data_sample)
+                print(repr(data_sample))
                 # follow(err)  # loses the line often
                 # follow_slow(err)  # yay, this works, but sometimes oversteers anyway
                 follow_fast(err)
