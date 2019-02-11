@@ -1,69 +1,18 @@
 #!/usr/bin/env python3
 
-from CHIP_IO import GPIO
 from time import sleep
 import cv2
-from calc_angle import find_line_norm
 from datetime import datetime, timedelta
 import logging
-import math
 import glob
 import os
 import sys
 
+from calc_angle import find_line_col, find_line_norm
+from drive import drive, coast, turn_smooth
+
 logging.basicConfig(filename='all.log', level=logging.DEBUG)
 log = logging.getLogger(__name__)
-
-GPIO.setup("LCD-D12", GPIO.IN)
-GPIO.setup("LCD-D14", GPIO.IN)
-GPIO.setup("LCD-D18", GPIO.OUT)
-GPIO.setup("LCD-D20", GPIO.OUT)
-GPIO.setup("LCD-D22", GPIO.OUT)
-GPIO.setup("LCD-CLK", GPIO.OUT)
-GPIO.setup("LCD-VSYNC", GPIO.OUT)
-
-GPIO.input("LCD-D12")
-GPIO.input("LCD-D14")
-
-
-def drive(speed, direction=0):
-    log.debug("Driving %s %s".format(speed, direction))
-    if speed > 0:
-        GPIO.output("LCD-D20", GPIO.LOW)
-        GPIO.output("LCD-D22", GPIO.HIGH if direction > 0 else GPIO.LOW)
-        GPIO.output("LCD-CLK", GPIO.LOW if direction < 0 else GPIO.HIGH)
-        GPIO.output("LCD-VSYNC", GPIO.HIGH)
-        GPIO.output("LCD-D18", GPIO.HIGH)
-    elif speed < 0:
-        GPIO.output("LCD-D20", GPIO.LOW if direction > 0 else GPIO.HIGH)
-        GPIO.output("LCD-D22", GPIO.HIGH)
-        GPIO.output("LCD-CLK", GPIO.LOW)
-        GPIO.output("LCD-VSYNC", GPIO.HIGH if direction < 0 else GPIO.LOW)
-        GPIO.output("LCD-D18", GPIO.HIGH)
-    else: # brake
-        GPIO.output("LCD-D20", GPIO.LOW)
-        GPIO.output("LCD-D22", GPIO.HIGH)
-        GPIO.output("LCD-CLK", GPIO.LOW)
-        GPIO.output("LCD-VSYNC", GPIO.HIGH)
-        GPIO.output("LCD-D18", GPIO.HIGH)
-
-
-def coast():
-    log.debug("Putting motor controller to sleep")
-    GPIO.output("LCD-D18", GPIO.LOW)
-
-
-def find_line_col(img):
-    """ Simpleton logic - assume the line crosses the bottom row, so find the white pixels of the bottom row and take their midpoint. """
-    r = img.shape[0] - 1
-    leftmost = None
-    rightmost = None
-    for c in range(0, img.shape[1]):
-        if img.item(r, c) > 0:
-            if leftmost is None:
-                leftmost = c
-            rightmost = c
-    return None if leftmost is None or rightmost is None else (leftmost + rightmost) / 2
 
 
 def follow_slow(err):
@@ -76,20 +25,6 @@ def follow_slow(err):
         drive(1, -1)
         sleep(.02)
         coast()
-
-
-def turn_smooth(direction, amount):
-    assert amount >= 0
-    assert amount <= 1
-    duration = 0.05
-    n_pulses = 5
-    for i in range(n_pulses):
-    # for i in range(int(n_pulses * max((1 - amount), 0.2))):  # if need to turn a lot, then slow down in general, but don't stop
-        drive(1, direction)
-        sleep(duration / n_pulses * amount)
-        drive(1)
-        sleep(duration / n_pulses * (1 - amount))
-    coast()
 
 
 def follow_fast(err):

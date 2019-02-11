@@ -3,6 +3,20 @@ import glob
 import numpy as np
 from numpy import linalg
 
+
+def find_line_col(img):
+    """ Simpleton logic - assume the line crosses the bottom row, so find the white pixels of the bottom row and take their midpoint. """
+    r = img.shape[0] - 1
+    leftmost = None
+    rightmost = None
+    for c in range(0, img.shape[1]):
+        if img.item(r, c) > 0:
+            if leftmost is None:
+                leftmost = c
+            rightmost = c
+    return None if leftmost is None or rightmost is None else (leftmost + rightmost) / 2
+
+
 def is_edge(img, r, c):
     EDGE_THRESHOLD = 128
     return img.item(r, c) >= EDGE_THRESHOLD
