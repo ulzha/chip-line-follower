@@ -4,15 +4,17 @@
 # TODO livestream imagery too?
 
 from datetime import datetime, timedelta
-import matplotlib.pyplot as plt
-import numpy as np
-from time import sleep
-from calc_angle import find_line_norm
-import cv2
 import glob
 import os
 import re
 import sys
+from time import sleep
+
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
+
+from calc_angle import find_line_norm
 
 # x = np.linspace(0, 6*np.pi, 100)
 # y = np.sin(x)

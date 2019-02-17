@@ -1,12 +1,13 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
-from time import sleep
-import cv2
 from datetime import datetime, timedelta
-import logging
 import glob
+import logging
 import os
 import sys
+from time import sleep
+
+import cv2
 
 from calc_angle import find_line_col, find_line_norm
 from drive import drive, coast, turn_smooth
@@ -87,4 +88,3 @@ try:
         i_frame += 1
 finally:
     coast()
-    GPIO.cleanup()

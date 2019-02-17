@@ -1,3 +1,9 @@
+import atexit
+import logging
+from time import sleep
+
+from CHIP_IO import GPIO
+
 log = logging.getLogger(__name__)
 
 GPIO.setup("LCD-D12", GPIO.IN)
@@ -10,6 +16,8 @@ GPIO.setup("LCD-VSYNC", GPIO.OUT)
 
 GPIO.input("LCD-D12")
 GPIO.input("LCD-D14")
+
+atexit.register(GPIO.cleanup)
 
 
 def drive(speed, direction=0):
